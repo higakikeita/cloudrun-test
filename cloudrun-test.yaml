@@ -1,0 +1,45 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: cloudrun-test
+  namespace: '478737604527'
+spec:
+  template:
+    spec:
+      containerConcurrency: 80
+      containers:
+        - name: app
+          image: asia-northeast1-docker.pkg.dev/higaki-sysdig-training/my-repo/cloudrun-test:latest
+          ports:
+            - containerPort: 8080
+              name: http1
+          env:
+            - name: SYSDIG_WORKLOAD_ID
+              value: "cloudrun-test-service01"
+            - name: SYSDIG_SIDECAR
+              value: "force"
+          volumeMounts:
+            - name: sysdig
+              mountPath: /opt/draios/run
+
+        - name: sysdig-agent
+          image: asia-northeast1-docker.pkg.dev/higaki-sysdig-training/my-repo/sysdig-workload-agent:latest
+          env:
+            - name: SYSDIG_ACCESS_KEY
+            - name: SYSDIG_REGION_ENDPOINT
+              value: "ingest-us2.app.sysdig.com"
+            - name: SYSDIG_WORKLOAD_ID
+              value: "cloudrun-test-service01"
+            - name: SYSDIG_SIDECAR
+              value: "force"
+            - name: SYSDIG_COLLECTOR
+              value: "your_collector_url"  # 必要に応じて更新
+            - name: SYSDIG_COLLECTOR_PORT
+              value: "443"               # HTTPS 使用時など
+          volumeMounts:
+            - name: sysdig
+              mountPath: /opt/draios/run
+
+      volumes:
+        - name: sysdig
+          emptyDir: {}
